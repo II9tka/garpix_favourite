@@ -1,48 +1,73 @@
-# GarpixCMS Empty Template
+# Garpix Favourites
 
-Cookiecutter template for GarpixCMS == 1.0.0.
 
-## Install
+User Favourites module for Django/DRF projects. Part of GarpixCMS.
 
-1. Install Docker and docker-compose.
-   
-For Debian, Ubuntu:
+## Quickstart
 
-```
-su
-apt update; apt upgrade -y; apt install -y curl; curl -sSL https://get.docker.com/ | sh; curl -L https://github.com/docker/compose/releases/download/1.28.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
-```
+Install with pip 
 
-Don't forget press CTRL+D to exit from super user account.
+    $ pip install garpix_favorite
 
-2. Apply environment variables:
+Add the `garpix_favourite` to your INSTALLED_APPS:
 
-```
-cp example.env .env
-```
+```python
+# settings.py
 
-3. Change a random string for `SECRET_KEY` and `POSTGRES_PASSWORD` in `.env`.
-
-4. Install dependencies:
-
-```
-pipenv install
-pipenv shell
+INSTALLED_APPS = [
+    # ...
+    'garpix_favourite',
+]
 ```
 
-5. Up docker-compose, migrate database and create super user:
+Make migrations and migrate database:
+
+    $ ./manage.py makemigrations
+    $ ./manage.py migrate
+
+Add to `urls.py`:
 
 ```
-docker-compose up -d
-python3 backend/manage.py makemigrations
-python3 backend/manage.py migrate
-python3 backend/manage.py createsuperuser
+urlpatterns = [
+    # ...
+    path('', include('garpix_favourite.urls'))
+]
+```
+Add models that can be added to favorites in `settings.py`:
+
+```
+ACCEPTED_FAVORITE_MODELS = [
+    'YourModel',
+]
 ```
 
-6. Run the server:
-
+Also inherit them from `FavoriteMixin` and override `get_absolute_url()` method:
 ```
-python3 backend/manage.py runserver
+# models.py
+
+from django.db import models
+from garpix_favourite.utils import FavoriteMixin
+
+
+class YourModel(FavoriteMixin, models.Model):
+    ...
+
+    def get_absolute_url(self) -> str:
+        return reverse('view-detail', args=[self.id])
 ```
 
-7. Enjoy!
+Inherit your serializer from `FavoriteSerializerMixin`:
+```
+# serializers.py
+
+from rest_framework import serializers
+from garpix_favourite.utils import FavoriteMixin
+
+
+class YourModelSerializer(FavoriteMixin, serializers.ModelSerializer):
+    ...
+```
+
+---
+
+Developed by Garpix / [https://garpix.com](https://garpix.com)
